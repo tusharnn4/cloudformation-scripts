@@ -1,0 +1,99 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: >-
+  AWS CloudFormation Sample Template vpc_single_instance_in_subnet.template:
+  Sample template showing how to create a VPC and add an EC2 instance with an
+  Elastic IP address and a security group. **WARNING** This template creates an
+  Amazon EC2 instance. You will be billed for the AWS resources used if you
+  create a stack from this template.
+Parameters:
+  InstanceType:
+    Description: EC2 instance type
+    Type: String
+    Default: t2.micro
+    AllowedValues:
+      - t2.micro
+      - t2.medium
+      - t3.medium
+      - m4.large
+    ConstraintDescription: must be a valid EC2 instance type.
+  Volume: 
+    Description: EC2 instance type
+    Type: String
+    AllowedPattern: '([0-9])*'
+  VpcId:
+    Description: Select a VPC IDs
+    Type: 'AWS::EC2::VPC::Id'
+  SubnetID:
+    Description: Subnet IDs
+    Type: 'AWS::EC2::Subnet::Id'
+  SecurityGroupID:
+    Description: Security Group IDs
+    Type: 'AWS::EC2::SecurityGroup::Id'
+  KeyName:
+    Description: Name of an existing EC2 KeyPair to enable SSH access to the instance
+    Type: 'AWS::EC2::KeyPair::KeyName'
+  IAMRole:
+    Description: Select the name of the IAM Role
+    Type: String
+Mappings:
+  RegionMap:
+    eu-west-1:
+      AMI: ami-0a6eea0d036b879f4
+Resources:
+  IPAddress:
+    Type: 'AWS::EC2::EIP'
+    Properties:
+      Domain: vpc
+      InstanceId: !Ref EC2Instance
+  InstanceProfile: 
+    Type: 'AWS::IAM::InstanceProfile'
+    Properties: 
+      Path: /
+      Roles: [!Ref IAMRole]
+  EC2Instance:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      ImageId: !FindInMap 
+        - RegionMap
+        - !Ref 'AWS::Region'
+        - AMI
+      SecurityGroupIds:
+        - !Ref SecurityGroupID
+      SubnetId: !Ref SubnetID
+      InstanceType: !Ref InstanceType
+      KeyName: !Ref KeyName
+      IamInstanceProfile: !Ref InstanceProfile
+      BlockDeviceMappings:
+        - DeviceName: /dev/sda1
+          Ebs:
+            VolumeSize: !Ref Volume
+            VolumeType: gp2
+      Tags:
+        - Key: Name
+          Value: Matillion
+        - Key: Owner
+          Value: Data Team
+      UserData: !Base64 
+        'Fn::Join':
+          - ''
+          - - |
+              #!/bin/bash
+            - |
+              yum update -y 
+              sudo yum groupinstall "Development Tools" "Development Libraries" -y
+              sudo yum install MySQL-python -y
+              sudo yum install mysql-devel python-devel -y
+              sudo yum install python-pip -y
+              sudo yum install nmap -y
+              sudo yum install python3-pip -y
+              sudo yum update python* -y
+            - |
+Outputs:
+  URL:
+    Value: !Join 
+      - ''
+      - - 'http://'
+        - !GetAtt 
+          - EC2Instance
+          - PublicIp
+    Description: Newly created application URL
