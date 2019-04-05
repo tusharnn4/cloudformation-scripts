@@ -1,0 +1,84 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: AWS Redshift Cluster
+Parameters:
+  NumberOfNodes:
+    Description: The number of compute nodes in the cluster
+    Type: Number
+    Default: '1'
+  NodeType:
+    Description: The type of node to be provisioned
+    Type: String
+    Default: dc2.large
+    AllowedValues:
+      - dc2.large
+  OwnerAccount:
+    Description: >-
+      The Owner Account for the Snapshot.
+    Type: String
+  SnapshotClusterIdentifier:
+    Description: >-
+      The Cluster Identifier for the Snapshot.
+    Type: String
+  SnapshotIdentifier:
+    Description: >-
+      The Snapshot Identifier for the Snapshot.
+    Type: String
+  SubnetID:
+    Description: Subnet IDs
+    Type: 'AWS::EC2::Subnet::Id'
+  SecurityGroupID:
+    Description: Security Group IDs
+    Type: 'AWS::EC2::SecurityGroup::Id'
+Resources:
+  RedshiftCluster:
+    Type: 'AWS::Redshift::Cluster'
+    Properties:
+      ClusterType: 'multi-node'
+      NumberOfNodes: !Ref NumberOfNodes
+      NodeType: !Ref NodeType
+      Encrypted: 'true'
+      DBName: 'packtdwh'
+      MasterUsername: 'root'
+      MasterUserPassword: 'root'
+      PubliclyAccessible: 'true'
+      AutomatedSnapshotRetentionPeriod: 30
+      ClusterParameterGroupName: !Ref RedshiftClusterParameterGroup
+      VpcSecurityGroupIds: [!Ref SecurityGroupID]
+      ClusterSubnetGroupName: !Ref RedshiftClusterSubnetGroup
+      OwnerAccount: !Ref OwnerAccount
+      SnapshotClusterIdentifier: !Ref SnapshotClusterIdentifier
+      SnapshotIdentifier: !Ref SnapshotIdentifier
+  RedshiftClusterParameterGroup:
+    Type: 'AWS::Redshift::ClusterParameterGroup'
+    Properties:
+      Description: Cluster parameter group
+      ParameterGroupFamily: redshift-1.0
+      Parameters:
+        - ParameterName: enable_user_activity_logging
+          ParameterValue: 'true'
+  RedshiftClusterSubnetGroup:
+    Type: 'AWS::Redshift::ClusterSubnetGroup'
+    Properties:
+      Description: Cluster subnet group
+      SubnetIds:
+        - !Ref SubnetID
+Outputs:
+  ClusterEndpoint:
+    Description: Cluster endpoint
+    Value: !Join 
+      - ':'
+      - - !GetAtt 
+          - RedshiftCluster
+          - Endpoint.Address
+        - !GetAtt 
+          - RedshiftCluster
+          - Endpoint.Port
+  ClusterName:
+    Description: Name of the Cluster
+    Value: !Ref RedshiftCluster
+  ParameterGroupName:
+    Description: Name of the Parameter Group
+    Value: !Ref RedshiftClusterParameterGroup
+  RedshiftClusterSubnetGroupName:
+    Description: Name of the Cluster Subnet Group
+    Value: !Ref RedshiftClusterSubnetGroup
