@@ -1,9 +1,7 @@
 AWSTemplateFormatVersion: 2010-09-09
 Description: >-
-  AWS CloudFormation Templateto launch EC2 instance with a Role:
-  Sample template showing how to create a VPC and add an EC2 instance with an
-  Elastic IP address and an assigned Role. 
-  **WARNING** This template creates an  Amazon EC2 instance. You will be billed for the AWS resources used if you
+  AWS CloudFormation Templateto launch EC2 instance with a Role:Sample template showing how to create a VPC and add an EC2 instance with an
+  Elastic IP address and an assigned Role. **WARNING** This template creates an  Amazon EC2 instance. You will be billed for the AWS resources used if you
   create a stack from this template.
 Parameters:
   InstanceType:
