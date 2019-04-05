@@ -1,2 +1,2 @@
 # cloudformation-scripts
-This repository holds all the cloud formation scripts created which couldn't find on the internet
+This repository holds all the cloud formation scripts created which might be helpful.
