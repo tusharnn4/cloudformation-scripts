@@ -1,0 +1,88 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: AWS Redshift Cluster
+Parameters:
+  DatabaseName:
+    Description: Database to be created when the cluster is created
+    Type: String
+    Default: dev
+    AllowedPattern: '([a-z]|[0-9])+'
+  SubnetID:
+    Description: Subnet IDs
+    Type: 'AWS::EC2::Subnet::Id'
+  SecurityGroupID:
+    Description: Security Group IDs
+    Type: 'AWS::EC2::SecurityGroup::Id'
+  NumberOfNodes:
+    Description: The number of compute nodes in the cluster
+    Type: Number
+    Default: '1'
+  NodeType:
+    Description: The type of node to be provisioned
+    Type: String
+    Default: dc2.large
+    AllowedValues:
+      - dc2.large
+  MasterUsername:
+    Description: >-
+      The user name that is associated with the master user account for the
+      cluster that is being created 
+    Type: String
+    Default: root
+    AllowedPattern: '([a-z])([a-z]|[0-9])*'
+  MasterUserPassword:
+    Description: >-
+      The password that is associated with the master user account for the
+      cluster that is being created.
+    Type: String
+    NoEcho: 'true'
+Resources:
+  RedshiftCluster:
+    Type: 'AWS::Redshift::Cluster'
+    Properties:
+      ClusterType: 'multi-node'
+      NumberOfNodes: !Ref NumberOfNodes
+      NodeType: !Ref NodeType
+      Encrypted: 'true'
+      PubliclyAccessible: 'true'
+      AutomatedSnapshotRetentionPeriod: 30
+      DBName: !Ref DatabaseName
+      MasterUsername: !Ref MasterUsername
+      MasterUserPassword: !Ref MasterUserPassword
+      ClusterParameterGroupName: !Ref RedshiftClusterParameterGroup
+      VpcSecurityGroupIds:
+        - !Ref SecurityGroupID
+      ClusterSubnetGroupName: !Ref RedshiftClusterSubnetGroup
+  RedshiftClusterParameterGroup:
+    Type: 'AWS::Redshift::ClusterParameterGroup'
+    Properties:
+      Description: Cluster parameter group
+      ParameterGroupFamily: redshift-1.0
+      Parameters:
+        - ParameterName: enable_user_activity_logging
+          ParameterValue: 'true'
+  RedshiftClusterSubnetGroup:
+    Type: 'AWS::Redshift::ClusterSubnetGroup'
+    Properties:
+      Description: Cluster subnet group
+      SubnetIds:
+        - !Ref SubnetID
+Outputs:
+  ClusterEndpoint:
+    Description: Cluster endpoint
+    Value: !Join 
+      - ':'
+      - - !GetAtt 
+          - RedshiftCluster
+          - Endpoint.Address
+        - !GetAtt 
+          - RedshiftCluster
+          - Endpoint.Port
+  ClusterName:
+    Description: Name of the Cluster
+    Value: !Ref RedshiftCluster
+  ParameterGroupName:
+    Description: Name of the Parameter Group
+    Value: !Ref RedshiftClusterParameterGroup
+  RedshiftClusterSubnetGroupName:
+    Description: Name of the Cluster Subnet Group
+    Value: !Ref RedshiftClusterSubnetGroup
